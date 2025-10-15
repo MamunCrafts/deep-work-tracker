@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevDeep: Deep Work Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Styling for the flip clock animation */
+        .flip-card {
+            position: relative;
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .flip-card .top, .flip-card .bottom,
+        .flip-card .top-flip, .flip-card .bottom-flip {
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: clamp(2rem, 10vw, 4rem);
+            line-height: 1;
+            backface-visibility: hidden;
+        }
+        .flip-card .top, .flip-card .top-flip {
+            top: 0;
+            align-items: flex-end;
+            padding-bottom: 0.1em;
+            background-color: #2a2a38;
+            color: #f0f0f0;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.4);
+        }
+        .flip-card .bottom, .flip-card .bottom-flip {
+            bottom: 0;
+            align-items: flex-start;
+            padding-top: 0.1em;
+            background-color: #34344a;
+            color: #e0e0e0;
+            border-bottom-left-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+        .flip-card .top-flip {
+            transform: rotateX(0deg);
+            transform-origin: bottom;
+            animation: flip-top 0.6s ease-in-out forwards;
+        }
+        .flip-card .bottom-flip {
+            transform: rotateX(90deg);
+            transform-origin: top;
+            animation: flip-bottom 0.6s 0s ease-in-out forwards;
+        }
+        @keyframes flip-top {
+            100% {
+                transform: rotateX(-90deg);
+            }
+        }
+        @keyframes flip-bottom {
+            100% {
+                transform: rotateX(0deg);
+            }
+        }
+        /* A subtle line to make the flip more realistic */
+        .flip-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4 sm:p-6">
+    <div class="w-full max-w-4xl mx-auto text-center">
+        <!-- Header Section -->
+        <header class="mb-8 md:mb-12">
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 mb-2">
+                Deep Work
+            </h1>
+            <p class="text-lg md:text-xl text-gray-300">
+                Disconnect everything to build something great
+            </p>
+        </header>
+
+        <!-- Timer Setup Section (Initially Visible) -->
+        <div id="setup-container" class="transition-opacity duration-500">
+             <div class="mb-6">
+                <label for="duration-input" class="block text-lg text-gray-300 mb-2">Set Focus Duration (Minutes)</label>
+                <input type="number" id="duration-input" value="25" class="w-48 text-center bg-gray-800 text-white text-xl p-3 rounded-lg border-2 border-gray-700 focus:border-cyan-500 focus:outline-none">
+            </div>
+            <button id="start-button" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-full text-lg md:text-xl shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out">
+                Begin Focus Session
+            </button>
+        </div>
+
+        <!-- Timer Display Section (Initially Hidden) -->
+        <div id="timer-display" class="hidden transition-opacity duration-500">
+            <!-- Countdown Timer Section -->
+            <div id="countdown-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-8 mb-8 md:mb-12">
+                <!-- Days -->
+                <div class="flex flex-col items-center">
+                    <div class="flip-card w-full h-24 md:h-32 rounded-lg bg-[#34344a]">
+                        <div class="top">00</div>
+                        <div class="bottom">00</div>
+                    </div>
+                    <span class="mt-3 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Days</span>
+                </div>
+                <!-- Hours -->
+                <div class="flex flex-col items-center">
+                    <div class="flip-card w-full h-24 md:h-32 rounded-lg bg-[#34344a]">
+                        <div class="top">00</div>
+                        <div class="bottom">00</div>
+                    </div>
+                    <span class="mt-3 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Hours</span>
+                </div>
+                <!-- Minutes -->
+                <div class="flex flex-col items-center">
+                    <div class="flip-card w-full h-24 md:h-32 rounded-lg bg-[#34344a]">
+                        <div class="top">00</div>
+                        <div class="bottom">00</div>
+                    </div>
+                    <span class="mt-3 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Minutes</span>
+                </div>
+                <!-- Seconds -->
+                <div class="flex flex-col items-center">
+                    <div class="flip-card w-full h-24 md:h-32 rounded-lg bg-[#34344a]">
+                        <div class="top">00</div>
+                        <div class="bottom">00</div>
+                    </div>
+                    <span class="mt-3 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Seconds</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar Section -->
+            <div class="w-full bg-gray-700 rounded-full h-4 mb-8 md:mb-12 shadow-inner">
+                <div id="progress-bar" class="bg-gradient-to-r from-teal-500 to-cyan-500 h-4 rounded-full transition-all duration-500 ease-out" style="width: 100%"></div>
+            </div>
+        </div>
+
+        <!-- Message when expired -->
+        <div id="expired-message" class="hidden mt-8 text-3xl font-bold text-teal-400">
+            Session Complete! Great work.
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const setupContainer = document.getElementById('setup-container');
+            const timerDisplay = document.getElementById('timer-display');
+            const startButton = document.getElementById('start-button');
+            const durationInput = document.getElementById('duration-input');
+            
+            const countdownContainer = document.getElementById('countdown-container');
+            const expiredMessage = document.getElementById('expired-message');
+            const progressBar = document.getElementById('progress-bar');
+            
+            const daysCard = countdownContainer.children[0].querySelector('.flip-card');
+            const hoursCard = countdownContainer.children[1].querySelector('.flip-card');
+            const minutesCard = countdownContainer.children[2].querySelector('.flip-card');
+            const secondsCard = countdownContainer.children[3].querySelector('.flip-card');
+
+            let timerInterval;
+            let previousTime = {};
+            let tickSynth;
+            let finishSynth;
+
+            // Initialize the sound synthesizers
+            function setupSounds() {
+                tickSynth = new Tone.MembraneSynth({
+                    pitchDecay: 0.01,
+                    octaves: 6,
+                    oscillator: { type: 'square' },
+                    envelope: {
+                        attack: 0.001,
+                        decay: 0.2,
+                        sustain: 0.01,
+                        release: 0.01,
+                    },
+                }).toDestination();
+                tickSynth.volume.value = -12; // Lower the volume
+
+                finishSynth = new Tone.Synth({
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.5 }
+                }).toDestination();
+            }
+
+            startButton.addEventListener('click', () => {
+                // Audio context must be started by a user gesture
+                Tone.start();
+                setupSounds();
+
+                const sessionDurationMinutes = parseInt(durationInput.value) || 25;
+                
+                const sessionStartTime = new Date().getTime();
+                const sessionEndTime = sessionStartTime + sessionDurationMinutes * 60 * 1000;
+                const totalDuration = sessionEndTime - sessionStartTime;
+
+                // Hide setup and show timer
+                setupContainer.classList.add('opacity-0');
+                setTimeout(() => {
+                    setupContainer.classList.add('hidden');
+                    timerDisplay.classList.remove('hidden');
+                    timerDisplay.classList.add('opacity-100');
+                }, 500);
+
+                function updateAllCards() {
+                    if (tickSynth) {
+                        tickSynth.triggerAttackRelease("C2", "8n");
+                    }
+
+                    const now = new Date().getTime();
+                    const distance = sessionEndTime - now;
+
+                    if (distance < 0) {
+                        clearInterval(timerInterval);
+                        timerDisplay.style.display = 'none';
+                        expiredMessage.classList.remove('hidden');
+                        if(finishSynth) {
+                            finishSynth.triggerAttackRelease("C5", "0.5s");
+                        }
+                        return;
+                    }
+
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    const time = { days, hours, minutes, seconds };
+
+                    const timeRemaining = distance;
+                    const progressPercentage = (timeRemaining / totalDuration) * 100;
+                    progressBar.style.width = `${Math.max(0, progressPercentage)}%`;
+
+                    if (previousTime.days !== time.days) flip(daysCard, formatTime(time.days));
+                    if (previousTime.hours !== time.hours) flip(hoursCard, formatTime(time.hours));
+                    if (previousTime.minutes !== time.minutes) flip(minutesCard, formatTime(time.minutes));
+                    if (previousTime.seconds !== time.seconds) flip(secondsCard, formatTime(time.seconds));
+
+                    previousTime = time;
+                }
+
+                updateAllCards();
+                timerInterval = setInterval(updateAllCards, 1000);
+            });
+            
+            function formatTime(time) {
+                return time < 10 ? `0${time}` : time;
+            }
+
+            function flip(card, newNumber) {
+                const topHalf = card.querySelector(".top");
+                const bottomHalf = card.querySelector(".bottom");
+                const startNumber = topHalf.textContent;
+
+                if (newNumber == startNumber) return;
+                
+                const topFlip = document.createElement("div");
+                topFlip.classList.add("top-flip");
+                topFlip.textContent = startNumber;
+
+                const bottomFlip = document.createElement("div");
+                bottomFlip.classList.add("bottom-flip");
+                bottomFlip.textContent = newNumber;
+                
+                topHalf.textContent = newNumber;
+                bottomHalf.textContent = newNumber;
+                
+                topFlip.addEventListener("animationend", e => topFlip.remove());
+                bottomFlip.addEventListener("animationend", e => bottomFlip.remove());
+
+                card.append(topFlip, bottomFlip);
+            }
+        });
+    </script>
+</body>
+</html>
+
