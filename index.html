@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
     <title>DevDeep: Deep Work Timer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
@@ -89,6 +89,22 @@
             background: rgba(0, 0, 0, 0.2);
             z-index: 10;
         }
+        /* Animation for the topic display */
+        #focus-topic-display span {
+            opacity: 0;
+            display: inline-block; /* Required for transforms */
+            animation: revealChar 3s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+        }
+        @keyframes revealChar {
+            0%, 100% {
+                opacity: 0;
+                transform: translateY(25px) rotateX(-90deg);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg);
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4 sm:p-6">
@@ -99,7 +115,9 @@
                 Deep Work
             </h1>
             <p class="text-lg md:text-xl text-gray-300">
-                Disconnect everything to build something great
+               Disconnect everything to build something great
+
+
             </p>
         </header>
 
@@ -109,52 +127,61 @@
                 <label for="duration-input" class="block text-lg text-gray-300 mb-2">Set Focus Duration (Minutes)</label>
                 <input type="number" id="duration-input" value="25" class="w-48 text-center bg-gray-800 text-white text-xl p-3 rounded-lg border-2 border-gray-700 focus:border-cyan-500 focus:outline-none">
             </div>
+             <div class="mb-8">
+                <label for="topic-input" class="block text-lg text-gray-300 mb-2">What's your focus topic?</label>
+                <input type="text" id="topic-input" placeholder="e.g., Refactor the auth module" class="w-full max-w-md text-center bg-gray-800 text-white text-xl p-3 rounded-lg border-2 border-gray-700 focus:border-cyan-500 focus:outline-none">
+            </div>
             <button id="start-button" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white font-bold py-4 px-10 rounded-full text-lg md:text-xl shadow-lg transform hover:scale-105 transition-transform duration-300 ease-in-out">
                 Begin Focus Session
             </button>
         </div>
 
         <!-- Timer Display Section (Initially Hidden) -->
-        <div id="timer-display" class="hidden transition-opacity duration-500">
+        <div id="timer-display" class="hidden opacity-0 transition-opacity duration-500">
             <!-- Countdown Timer Section -->
             <div id="countdown-container" class="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-8 mb-8 md:mb-12">
                 <!-- Days -->
                 <div class="flex flex-col items-center">
-                    <div class="flip-card w-full h-24 md:h-32 rounded-lg bg-[#34344a]">
+                    <div class="flip-card w-full h-24 md:h-36 rounded-lg bg-[#34344a]">
                         <div class="top">00</div>
                         <div class="bottom">00</div>
                     </div>
-                    <span class="mt-3 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Days</span>
+                    <span class="mt-5 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Days</span>
                 </div>
                 <!-- Hours -->
                 <div class="flex flex-col items-center">
-                    <div class="flip-card w-full h-24 md:h-32 rounded-lg bg-[#34344a]">
+                    <div class="flip-card w-full h-24 md:h-36 rounded-lg bg-[#34344a]">
                         <div class="top">00</div>
                         <div class="bottom">00</div>
                     </div>
-                    <span class="mt-3 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Hours</span>
+                    <span class="mt-5 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Hours</span>
                 </div>
                 <!-- Minutes -->
                 <div class="flex flex-col items-center">
-                    <div class="flip-card w-full h-24 md:h-32 rounded-lg bg-[#34344a]">
+                    <div class="flip-card w-full h-24 md:h-36 rounded-lg bg-[#34344a]">
                         <div class="top">00</div>
                         <div class="bottom">00</div>
                     </div>
-                    <span class="mt-3 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Minutes</span>
+                    <span class="mt-5 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Minutes</span>
                 </div>
                 <!-- Seconds -->
                 <div class="flex flex-col items-center">
-                    <div class="flip-card w-full h-24 md:h-32 rounded-lg bg-[#34344a]">
+                    <div class="flip-card w-full h-24 md:h-36 rounded-lg bg-[#34344a]">
                         <div class="top">00</div>
                         <div class="bottom">00</div>
                     </div>
-                    <span class="mt-3 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Seconds</span>
+                    <span class="mt-5 text-sm md:text-lg font-semibold text-gray-400 uppercase tracking-wider">Seconds</span>
                 </div>
             </div>
 
             <!-- Progress Bar Section -->
             <div class="w-full bg-gray-700 rounded-full h-4 mb-8 md:mb-12 shadow-inner">
                 <div id="progress-bar" class="bg-gradient-to-r from-teal-500 to-cyan-500 h-4 rounded-full transition-all duration-500 ease-out" style="width: 100%"></div>
+            </div>
+            
+            <!-- Topic Display -->
+            <div id="topic-display-container" class="mt-8">
+                <h2 id="focus-topic-display" class="text-2xl md:text-3xl text-gray-300 font-semibold"></h2>
             </div>
         </div>
 
@@ -170,6 +197,8 @@
             const timerDisplay = document.getElementById('timer-display');
             const startButton = document.getElementById('start-button');
             const durationInput = document.getElementById('duration-input');
+            const topicInput = document.getElementById('topic-input');
+            const focusTopicDisplay = document.getElementById('focus-topic-display');
             
             const countdownContainer = document.getElementById('countdown-container');
             const expiredMessage = document.getElementById('expired-message');
@@ -212,7 +241,18 @@
                 setupSounds();
 
                 const sessionDurationMinutes = parseInt(durationInput.value) || 25;
+                const focusTopic = topicInput.value.trim() || "Deep Focus Session";
                 
+                // New animation logic
+                focusTopicDisplay.innerHTML = ''; // Clear any previous topic
+                focusTopic.split('').forEach((char, index) => {
+                    const span = document.createElement('span');
+                    // Replace spaces with a non-breaking space to ensure they are rendered and animated
+                    span.innerHTML = char === ' ' ? '&nbsp;' : char; 
+                    span.style.animationDelay = `${index * 80}ms`; // Stagger the animation
+                    focusTopicDisplay.appendChild(span);
+                });
+
                 const sessionStartTime = new Date().getTime();
                 const sessionEndTime = sessionStartTime + sessionDurationMinutes * 60 * 1000;
                 const totalDuration = sessionEndTime - sessionStartTime;
@@ -222,7 +262,7 @@
                 setTimeout(() => {
                     setupContainer.classList.add('hidden');
                     timerDisplay.classList.remove('hidden');
-                    timerDisplay.classList.add('opacity-100');
+                    timerDisplay.classList.remove('opacity-0');
                 }, 500);
 
                 function updateAllCards() {
